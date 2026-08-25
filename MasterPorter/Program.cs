@@ -1,32 +1,83 @@
+//using AutoEntity.EntityModels;
+//using Microsoft.EntityFrameworkCore;
+
+//var builder = WebApplication.CreateBuilder(args);
+
+//// 1. Add services to the container
+//builder.Services.AddControllers();
+
+//builder.Services.AddDbContext<MasterPorterContext>(options =>
+//    options.UseMySql(
+//        builder.Configuration.GetConnectionString("EC"),
+//        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("EC"))
+//    ));
+
+//// Define CORS policy in service configuration
+//builder.Services.AddCors(options => {
+//    options.AddPolicy("AllowReactApp",
+//        policy => policy.WithOrigins("http://localhost:5173")
+//                        .AllowAnyHeader()
+//                        .AllowAnyMethod());
+//});
+
+//builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSwaggerGen();
+
+//// 2. Build the app instance
+//var app = builder.Build();
+
+//// 3. Configure the HTTP request pipeline
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+//app.UseHttpsRedirection();
+
+//// Enable CORS middleware (MUST be after app is built, before UseAuthorization)
+//app.UseCors("AllowReactApp");
+
+//app.UseAuthorization();
+
+//app.MapControllers();
+
+//app.Run();
+
+
 using AutoEntity.EntityModels;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add services to the container
+// Controllers
 builder.Services.AddControllers();
 
+// Database
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("EC"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("EC"))
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("EC")
+        )
     ));
 
-// Define CORS policy in service configuration
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins("http://localhost:5173")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+// CORS - Default Policy
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. Build the app instance
 var app = builder.Build();
 
-// 3. Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -35,8 +86,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable CORS middleware (MUST be after app is built, before UseAuthorization)
-app.UseCors("AllowReactApp");
+// CORS
+app.UseCors();
 
 app.UseAuthorization();
 
