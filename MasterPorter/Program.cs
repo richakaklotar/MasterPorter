@@ -3,8 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// 1. Add services to the container
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<MasterPorterContext>(options =>
@@ -13,13 +12,21 @@ builder.Services.AddDbContext<MasterPorterContext>(options =>
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("EC"))
     ));
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Define CORS policy in service configuration
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowReactApp",
+        policy => policy.WithOrigins("http://localhost:5173")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 2. Build the app instance
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 3. Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -27,6 +34,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enable CORS middleware (MUST be after app is built, before UseAuthorization)
+app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 
