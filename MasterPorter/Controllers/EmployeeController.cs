@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoEntity.EntityModels;
+using ModifyService;
+using ReadService;
 
 namespace MasterPorter.Controllers
 {
@@ -13,111 +9,132 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly MasterPorterContext _context;
-
-        public EmployeeController(MasterPorterContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Employee
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployee()
+        public IActionResult GetAll()
         {
-          if (_context.Employee == null)
-          {
-              return NotFound();
-          }
-            return await _context.Employee.ToListAsync();
-        }
-
-        // GET: api/Employee/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Employee>> GetEmployee(int id)
-        {
-          if (_context.Employee == null)
-          {
-              return NotFound();
-          }
-            var employee = await _context.Employee.FindAsync(id);
-
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            return employee;
-        }
-
-        // PUT: api/Employee/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(int id, Employee employee)
-        {
-            if (id != employee.EmployeeID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(employee).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                return Ok(
+                    QPrimaryService.GetExistingEmployeeList());
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!EmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = ex.Message });
             }
-
-            return NoContent();
         }
 
-        // POST: api/Employee
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            try
+            {
+                return Ok(
+                    QPrimaryService.GetEmployee(id));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public IActionResult Create(Employee employee)
         {
-          if (_context.Employee == null)
-          {
-              return Problem("Entity set 'MasterPorterContext.Employee'  is null.");
-          }
-            _context.Employee.Add(employee);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (employee == null)
+                    return BadRequest(new
+                    {
+                        message = "Employee data is required."
+                    });
 
-            return CreatedAtAction("GetEmployee", new { id = employee.EmployeeID }, employee);
+                employee.EmployeeID = 0;
+
+                var service = new DataModify();
+
+                int id = service.SaveEmployee(employee);
+
+                return StatusCode(
+                    201,
+                    QPrimaryService.GetEmployee(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    innerException =
+                        ex.InnerException?.Message
+                });
+            }
         }
 
-        // DELETE: api/Employee/5
+        [HttpPut("{id}")]
+        public IActionResult Update(
+            int id,
+            Employee employee)
+        {
+            try
+            {
+                QPrimaryService.GetEmployee(id);
+
+                employee.EmployeeID = id;
+
+                var service = new DataModify();
+
+                service.SaveEmployee(employee);
+
+                return Ok(
+                    QPrimaryService.GetEmployee(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    innerException =
+                        ex.InnerException?.Message
+                });
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployee(int id)
+        public IActionResult Delete(int id)
         {
-            if (_context.Employee == null)
+            try
             {
-                return NotFound();
+                using var context = new MasterPorterContext();
+
+                var employee = context.Employee
+                    .FirstOrDefault(x =>
+                        x.EmployeeID == id);
+
+                if (employee == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "Employee not found."
+                    });
+                }
+
+                context.Employee.Remove(employee);
+                context.SaveChanges();
+
+                return Ok(new
+                {
+                    message =
+                        "Employee deleted successfully."
+                });
             }
-            var employee = await _context.Employee.FindAsync(id);
-            if (employee == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    innerException =
+                        ex.InnerException?.Message
+                });
             }
-
-            _context.Employee.Remove(employee);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool EmployeeExists(int id)
-        {
-            return (_context.Employee?.Any(e => e.EmployeeID == id)).GetValueOrDefault();
         }
     }
 }

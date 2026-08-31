@@ -17,6 +17,8 @@ namespace AutoEntity.EntityModels
         [Required]
         public string EmployeeName { get; set; }
         [Required]
+        public string EmployeeCode { get; set; }
+        [Required]
         [MaxLength(10)]
         public string Phone { get; set; }
         [Required]
