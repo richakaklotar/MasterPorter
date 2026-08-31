@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoEntity.EntityModels;
+using ModifyService;
+using ReadService;
 
 namespace MasterPorter.Controllers
 {
@@ -13,111 +9,96 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class ActivitiesController : ControllerBase
     {
-        private readonly MasterPorterContext _context;
-
-        public ActivitiesController(MasterPorterContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Activities
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Activities>>> GetActivities()
+        public IActionResult GetAll()
         {
-          if (_context.Activities == null)
-          {
-              return NotFound();
-          }
-            return await _context.Activities.ToListAsync();
-        }
-
-        // GET: api/Activities/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Activities>> GetActivities(int id)
-        {
-          if (_context.Activities == null)
-          {
-              return NotFound();
-          }
-            var activities = await _context.Activities.FindAsync(id);
-
-            if (activities == null)
-            {
-                return NotFound();
-            }
-
-            return activities;
-        }
-
-        // PUT: api/Activities/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutActivities(int id, Activities activities)
-        {
-            if (id != activities.ActivitiesID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(activities).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                return Ok(QPrimaryService.GetExistingActivitiesList());
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!ActivitiesExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = ex.Message });
             }
-
-            return NoContent();
         }
 
-        // POST: api/Activities
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            try
+            {
+                return Ok(QPrimaryService.GetActivities(id));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Activities>> PostActivities(Activities activities)
+        public IActionResult Create(Activities activities)
         {
-          if (_context.Activities == null)
-          {
-              return Problem("Entity set 'MasterPorterContext.Activities'  is null.");
-          }
-            _context.Activities.Add(activities);
-            await _context.SaveChangesAsync();
+            try
+            {
+                activities.ActivitiesID = 0;
 
-            return CreatedAtAction("GetActivities", new { id = activities.ActivitiesID }, activities);
+                var service = new DataModify();
+                int id = service.SaveActivities(activities);
+
+                return StatusCode(201,
+                    QPrimaryService.GetActivities(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // DELETE: api/Activities/5
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, Activities activities)
+        {
+            try
+            {
+                QPrimaryService.GetActivities(id);
+
+                activities.ActivitiesID = id;
+
+                var service = new DataModify();
+                service.SaveActivities(activities);
+
+                return Ok(QPrimaryService.GetActivities(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteActivities(int id)
+        public IActionResult Delete(int id)
         {
-            if (_context.Activities == null)
+            try
             {
-                return NotFound();
+                using var context = new MasterPorterContext();
+
+                var activity = context.Activities
+                    .FirstOrDefault(x => x.ActivitiesID == id);
+
+                if (activity == null)
+                    return NotFound();
+
+                context.Activities.Remove(activity);
+                context.SaveChanges();
+
+                return Ok(new
+                {
+                    message = "Activity deleted successfully."
+                });
             }
-            var activities = await _context.Activities.FindAsync(id);
-            if (activities == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new { message = ex.Message });
             }
-
-            _context.Activities.Remove(activities);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ActivitiesExists(int id)
-        {
-            return (_context.Activities?.Any(e => e.ActivitiesID == id)).GetValueOrDefault();
         }
     }
 }

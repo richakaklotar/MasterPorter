@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoEntity.EntityModels;
+using ModifyService;
+using ReadService;
 
 namespace MasterPorter.Controllers
 {
@@ -13,111 +9,96 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class ShiftController : ControllerBase
     {
-        private readonly MasterPorterContext _context;
-
-        public ShiftController(MasterPorterContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Shift
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shift>>> GetShift()
+        public IActionResult GetAll()
         {
-          if (_context.Shift == null)
-          {
-              return NotFound();
-          }
-            return await _context.Shift.ToListAsync();
-        }
-
-        // GET: api/Shift/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Shift>> GetShift(int id)
-        {
-          if (_context.Shift == null)
-          {
-              return NotFound();
-          }
-            var shift = await _context.Shift.FindAsync(id);
-
-            if (shift == null)
-            {
-                return NotFound();
-            }
-
-            return shift;
-        }
-
-        // PUT: api/Shift/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutShift(int id, Shift shift)
-        {
-            if (id != shift.ShiftID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(shift).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                return Ok(QPrimaryService.GetExistingShiftList());
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!ShiftExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = ex.Message });
             }
-
-            return NoContent();
         }
 
-        // POST: api/Shift
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            try
+            {
+                return Ok(QPrimaryService.GetShift(id));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Shift>> PostShift(Shift shift)
+        public IActionResult Create(Shift shift)
         {
-          if (_context.Shift == null)
-          {
-              return Problem("Entity set 'MasterPorterContext.Shift'  is null.");
-          }
-            _context.Shift.Add(shift);
-            await _context.SaveChangesAsync();
+            try
+            {
+                shift.ShiftID = 0;
 
-            return CreatedAtAction("GetShift", new { id = shift.ShiftID }, shift);
+                var service = new DataModify();
+                int id = service.SaveShift(shift);
+
+                return StatusCode(201,
+                    QPrimaryService.GetShift(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // DELETE: api/Shift/5
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, Shift shift)
+        {
+            try
+            {
+                QPrimaryService.GetShift(id);
+
+                shift.ShiftID = id;
+
+                var service = new DataModify();
+                service.SaveShift(shift);
+
+                return Ok(QPrimaryService.GetShift(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteShift(int id)
+        public IActionResult Delete(int id)
         {
-            if (_context.Shift == null)
+            try
             {
-                return NotFound();
+                using var context = new MasterPorterContext();
+
+                var shift = context.Shift
+                    .FirstOrDefault(x => x.ShiftID == id);
+
+                if (shift == null)
+                    return NotFound();
+
+                context.Shift.Remove(shift);
+                context.SaveChanges();
+
+                return Ok(new
+                {
+                    message = "Shift deleted successfully."
+                });
             }
-            var shift = await _context.Shift.FindAsync(id);
-            if (shift == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new { message = ex.Message });
             }
-
-            _context.Shift.Remove(shift);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ShiftExists(int id)
-        {
-            return (_context.Shift?.Any(e => e.ShiftID == id)).GetValueOrDefault();
         }
     }
 }

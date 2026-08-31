@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoEntity.EntityModels;
+using ModifyService;
+using ReadService;
 
 namespace MasterPorter.Controllers
 {
@@ -13,111 +9,104 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class DesignationController : ControllerBase
     {
-        private readonly MasterPorterContext _context;
-
-        public DesignationController(MasterPorterContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Designation
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Designation>>> GetDesignation()
+        public IActionResult GetAll()
         {
-          if (_context.Designation == null)
-          {
-              return NotFound();
-          }
-            return await _context.Designation.ToListAsync();
-        }
-
-        // GET: api/Designation/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Designation>> GetDesignation(int id)
-        {
-          if (_context.Designation == null)
-          {
-              return NotFound();
-          }
-            var designation = await _context.Designation.FindAsync(id);
-
-            if (designation == null)
-            {
-                return NotFound();
-            }
-
-            return designation;
-        }
-
-        // PUT: api/Designation/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDesignation(int id, Designation designation)
-        {
-            if (id != designation.DesignationID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(designation).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                return Ok(
+                    QPrimaryService.GetExistingDesignationList());
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!DesignationExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = ex.Message });
             }
-
-            return NoContent();
         }
 
-        // POST: api/Designation
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            try
+            {
+                return Ok(
+                    QPrimaryService.GetDesignation(id));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Designation>> PostDesignation(Designation designation)
+        public IActionResult Create(Designation designation)
         {
-          if (_context.Designation == null)
-          {
-              return Problem("Entity set 'MasterPorterContext.Designation'  is null.");
-          }
-            _context.Designation.Add(designation);
-            await _context.SaveChangesAsync();
+            try
+            {
+                designation.DesignationID = 0;
 
-            return CreatedAtAction("GetDesignation", new { id = designation.DesignationID }, designation);
+                var service = new DataModify();
+                int id = service.SaveDesignation(designation);
+
+                return StatusCode(
+                    201,
+                    QPrimaryService.GetDesignation(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // DELETE: api/Designation/5
+        [HttpPut("{id}")]
+        public IActionResult Update(
+            int id,
+            Designation designation)
+        {
+            try
+            {
+                QPrimaryService.GetDesignation(id);
+
+                designation.DesignationID = id;
+
+                var service = new DataModify();
+                service.SaveDesignation(designation);
+
+                return Ok(
+                    QPrimaryService.GetDesignation(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDesignation(int id)
+        public IActionResult Delete(int id)
         {
-            if (_context.Designation == null)
+            try
             {
-                return NotFound();
+                using var context = new MasterPorterContext();
+
+                var designation = context.Designation
+                    .FirstOrDefault(x =>
+                        x.DesignationID == id);
+
+                if (designation == null)
+                    return NotFound();
+
+                context.Designation.Remove(designation);
+                context.SaveChanges();
+
+                return Ok(new
+                {
+                    message =
+                        "Designation deleted successfully."
+                });
             }
-            var designation = await _context.Designation.FindAsync(id);
-            if (designation == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new { message = ex.Message });
             }
-
-            _context.Designation.Remove(designation);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool DesignationExists(int id)
-        {
-            return (_context.Designation?.Any(e => e.DesignationID == id)).GetValueOrDefault();
         }
     }
 }
