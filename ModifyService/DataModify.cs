@@ -11,12 +11,14 @@ namespace ModifyService
         }
 
         #region Plant
+
         public int SaveBusiness(Plant plant)
         {
             if (plant == null)
-                throw new ArgumentException(nameof(Plant));
+                throw new ArgumentNullException(nameof(plant));
 
-            var isExists = false;
+            bool isExists = false;
+
             if (plant.PlantId > 0)
             {
                 try
@@ -29,24 +31,29 @@ namespace ModifyService
                     isExists = false;
                 }
             }
+
             int isSaved;
+
             using (var ecomContext = new MasterPorterContext())
             {
                 if (isExists)
                 {
-                    ecomContext.UpdateRange(plant);
+                    ecomContext.Update(plant);
                 }
                 else
                 {
-                    ecomContext.AttachRange(plant);
+                    ecomContext.Add(plant);
                 }
+
                 isSaved = ecomContext.SaveChanges();
             }
-            int bid = 0;
-            if (isSaved == 1)
-                bid = plant.PlantId;
-            return bid;
+
+            if (isSaved > 0)
+                return plant.PlantId;
+
+            return 0;
         }
+
         #endregion
 
         #region Division

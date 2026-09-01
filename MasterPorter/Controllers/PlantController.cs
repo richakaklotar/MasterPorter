@@ -1,110 +1,8 @@
-﻿//using AutoEntity.EntityModels;
-//using Microsoft.AspNetCore.Mvc;
-//using ModifyService;
-//using ReadService;
-
-//namespace MasterPorter.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class PlantController : ControllerBase
-//    {
-//        [HttpGet]
-//        public IActionResult GetAll()
-//        {
-//            try
-//            {
-//                return Ok(QPrimaryService.GetExistingPlantList());
-//            }
-//            catch (Exception ex)
-//            {
-//                return StatusCode(500, new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpGet("{id}")]
-//        public IActionResult GetById(int id)
-//        {
-//            try
-//            {
-//                return Ok(QPrimaryService.GetPlant(id));
-//            }
-//            catch (Exception ex)
-//            {
-//                return NotFound(new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpPost]
-//        public IActionResult Create(Plant plant)
-//        {
-//            try
-//            {
-//                plant.PlantId = 0;
-
-//                var service = new DataModify();
-//                int id = service.SaveBusiness(plant);
-
-//                return StatusCode(201, QPrimaryService.GetPlant(id));
-//            }
-//            catch (Exception ex)
-//            {
-//                return BadRequest(new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpPut("{id}")]
-//        public IActionResult Update(int id, Plant plant)
-//        {
-//            try
-//            {
-//                QPrimaryService.GetPlant(id);
-
-//                plant.PlantId = id;
-
-//                var service = new DataModify();
-//                service.SaveBusiness(plant);
-
-//                return Ok(QPrimaryService.GetPlant(id));
-//            }
-//            catch (Exception ex)
-//            {
-//                return BadRequest(new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpDelete("{id}")]
-//        public IActionResult Delete(int id)
-//        {
-//            try
-//            {
-//                using var context = new MasterPorterContext();
-
-//                var plant = context.Plants
-//                    .FirstOrDefault(x => x.PlantId == id);
-
-//                if (plant == null)
-//                    return NotFound();
-
-//                context.Plants.Remove(plant);
-//                context.SaveChanges();
-
-//                return Ok(new
-//                {
-//                    message = "Plant deleted successfully."
-//                });
-//            }
-//            catch (Exception ex)
-//            {
-//                return BadRequest(new { message = ex.Message });
-//            }
-//        }
-//    }
-//}
-
-using AutoEntity.EntityModels;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ModifyService;
+using ReadService;
 
 namespace MasterPorter.Controllers
 {
@@ -121,60 +19,53 @@ namespace MasterPorter.Controllers
 
         // GET: api/Plant
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public IActionResult GetAll()
         {
             try
             {
-                var plants = await _context.Plants
-                    .AsNoTracking()
-                    .OrderBy(x => x.PlantId)
-                    .ToListAsync();
+                var data = QPrimaryService.GetExistingPlantList();
 
-                return Ok(plants);
+                return Ok(data);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    message = "Error while getting plants.",
-                    error = ex.Message
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message,
+                    innerInnerException = ex.InnerException?.InnerException?.Message
                 });
             }
         }
 
         // GET: api/Plant/1
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
         {
             try
             {
-                var plant = await _context.Plants
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.PlantId == id);
+                var data = QPrimaryService.GetPlant(id);
 
-                if (plant == null)
-                {
-                    return NotFound(new
-                    {
-                        message = $"Plant with ID {id} not found."
-                    });
-                }
+                if (data == null)
+                    return NotFound(new { message = "Plant not found" });
 
-                return Ok(plant);
+                return Ok(data);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    message = "Error while getting plant.",
-                    error = ex.Message
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message,
+                    innerInnerException = ex.InnerException?.InnerException?.Message
                 });
             }
         }
 
         // POST: api/Plant
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Plant plant)
+        [HttpPost]
+        public IActionResult Create([FromBody] Plant plant)
         {
             try
             {
@@ -182,36 +73,35 @@ namespace MasterPorter.Controllers
                 {
                     return BadRequest(new
                     {
-                        message = "Plant data is required."
+                        message = "Plant data is required"
                     });
                 }
 
-                // Do not send existing ID while creating
-                plant.PlantId = 0;
+                var dataModify = new DataModify();
 
-                _context.Plants.Add(plant);
-                await _context.SaveChangesAsync();
+                int result = dataModify.SaveBusiness(plant);
 
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = plant.PlantId },
-                    plant
-                );
-            }
-            catch (DbUpdateException ex)
-            {
+                if (result > 0)
+                {
+                    return Ok(new
+                    {
+                        message = "Plant saved successfully",
+                        plantId = result
+                    });
+                }
+
                 return BadRequest(new
                 {
-                    message = "Unable to create plant.",
-                    error = ex.InnerException?.Message ?? ex.Message
+                    message = "Plant could not be saved"
                 });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    message = "Error while creating plant.",
-                    error = ex.Message
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message,
+                    innerInnerException = ex.InnerException?.InnerException?.Message
                 });
             }
         }
