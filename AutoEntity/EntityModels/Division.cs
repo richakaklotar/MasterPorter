@@ -22,6 +22,7 @@ namespace AutoEntity.EntityModels
 
         [ForeignKey(nameof(Plant))]
         public int PlantId { get; set; }
+        public bool? Isactive { get; set; }
 
         [JsonIgnore]
         [ValidateNever]

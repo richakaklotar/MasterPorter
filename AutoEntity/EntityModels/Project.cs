@@ -27,5 +27,6 @@ namespace AutoEntity.EntityModels
         [JsonIgnore]
         [ValidateNever]
         public virtual Machine Machine { get; set; }
+        public bool? Isactive { get; set; }
     }
 }

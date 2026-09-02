@@ -11,47 +11,43 @@ namespace ModifyService
         }
 
         #region Plant
-
         public int SaveBusiness(Plant plant)
         {
             if (plant == null)
                 throw new ArgumentNullException(nameof(plant));
 
-            bool isExists = false;
-
-            if (plant.PlantId > 0)
+            using (var context = new MasterPorterContext())
             {
-                try
+                // UPDATE PATH
+                if (plant.PlantId > 0)
                 {
-                    QPrimaryService.GetPlant(plant.PlantId);
-                    isExists = true;
-                }
-                catch (Exception)
-                {
-                    isExists = false;
-                }
-            }
+                    var existingPlant = context.Plants
+                        .FirstOrDefault(x => x.PlantId == plant.PlantId);
 
-            int isSaved;
+                    if (existingPlant == null)
+                    {
+                        return 0; // Record to update does not exist
+                    }
 
-            using (var ecomContext = new MasterPorterContext())
-            {
-                if (isExists)
-                {
-                    ecomContext.Update(plant);
+                    // Copy values directly to tracked entity
+                    existingPlant.PlantName = plant.PlantName;
+                    existingPlant.PlantCode = plant.PlantCode;
+
+                    // Map active state (handles both C# naming conventions if needed)
+                    existingPlant.Isactive = plant.Isactive;
+
+                    context.SaveChanges();
+                    return existingPlant.PlantId;
                 }
                 else
                 {
-                    ecomContext.Add(plant);
+                    // INSERT PATH
+                    plant.PlantId = 0;
+                    context.Plants.Add(plant);
+                    context.SaveChanges();
+                    return plant.PlantId;
                 }
-
-                isSaved = ecomContext.SaveChanges();
             }
-
-            if (isSaved > 0)
-                return plant.PlantId;
-
-            return 0;
         }
 
         #endregion

@@ -13,5 +13,6 @@ namespace AutoEntity.EntityModels
         public int DesignationID { get; set; }
         [Required]
         public string DesignationName { get; set; }
+        public bool? Isactive { get; set; }
     }
 }

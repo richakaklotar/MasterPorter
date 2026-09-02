@@ -25,5 +25,6 @@ namespace AutoEntity.EntityModels
         [JsonIgnore]
         [ValidateNever]
         public virtual Components Components { get; set; }
+        public bool? Isactive { get; set; }
     }
 }

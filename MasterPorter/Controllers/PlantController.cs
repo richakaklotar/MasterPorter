@@ -1,6 +1,5 @@
-﻿using AutoEntity.EntityModels;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using AutoEntity.EntityModels;
 using ModifyService;
 using ReadService;
 
@@ -10,60 +9,57 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class PlantController : ControllerBase
     {
-        private readonly MasterPorterContext _context;
-
-        public PlantController(MasterPorterContext context)
-        {
-            _context = context;
-        }
-
+        // =====================================================
+        // GET ALL
         // GET: api/Plant
+        // =====================================================
         [HttpGet]
         public IActionResult GetAll()
         {
             try
             {
-                var data = QPrimaryService.GetExistingPlantList();
-
-                return Ok(data);
+                var plants = QPrimaryService.GetExistingPlantList();
+                return Ok(plants);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    message = ex.Message,
-                    innerException = ex.InnerException?.Message,
-                    innerInnerException = ex.InnerException?.InnerException?.Message
-                });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
+        // =====================================================
+        // GET BY ID
         // GET: api/Plant/1
-        [HttpGet("{id}")]
+        // =====================================================
+        [HttpGet("{id:int}")]
         public IActionResult GetById(int id)
         {
             try
             {
-                var data = QPrimaryService.GetPlant(id);
+                if (id <= 0)
+                {
+                    return BadRequest(new { message = "Invalid Plant ID." });
+                }
 
-                if (data == null)
-                    return NotFound(new { message = "Plant not found" });
+                var plant = QPrimaryService.GetPlant(id);
 
-                return Ok(data);
+                if (plant == null)
+                {
+                    return BadRequest(new { message = "Plant not found." });
+                }
+
+                return Ok(plant);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    message = ex.Message,
-                    innerException = ex.InnerException?.Message,
-                    innerInnerException = ex.InnerException?.InnerException?.Message
-                });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
+        // =====================================================
+        // INSERT
         // POST: api/Plant
-        [HttpPost]
+        // =====================================================
         [HttpPost]
         public IActionResult Create([FromBody] Plant plant)
         {
@@ -71,28 +67,33 @@ namespace MasterPorter.Controllers
             {
                 if (plant == null)
                 {
-                    return BadRequest(new
-                    {
-                        message = "Plant data is required"
-                    });
+                    return BadRequest(new { message = "Plant data is required." });
                 }
 
-                var dataModify = new DataModify();
-
-                int result = dataModify.SaveBusiness(plant);
-
-                if (result > 0)
+                if (string.IsNullOrWhiteSpace(plant.PlantName))
                 {
-                    return Ok(new
-                    {
-                        message = "Plant saved successfully",
-                        plantId = result
-                    });
+                    return BadRequest(new { message = "Plant Name is required." });
                 }
 
-                return BadRequest(new
+                if (string.IsNullOrWhiteSpace(plant.PlantCode))
                 {
-                    message = "Plant could not be saved"
+                    return BadRequest(new { message = "Plant Code is required." });
+                }
+
+                plant.PlantId = 0;
+
+                var service = new DataModify();
+                var result = service.SaveBusiness(plant);
+
+                if (result <= 0)
+                {
+                    return BadRequest(new { message = "Plant could not be inserted." });
+                }
+
+                return Ok(new
+                {
+                    message = "Plant inserted successfully.",
+                    plantId = result
                 });
             }
             catch (Exception ex)
@@ -100,106 +101,102 @@ namespace MasterPorter.Controllers
                 return StatusCode(500, new
                 {
                     message = ex.Message,
-                    innerException = ex.InnerException?.Message,
-                    innerInnerException = ex.InnerException?.InnerException?.Message
+                    innerException = ex.InnerException?.Message
                 });
             }
         }
-
-        // PUT: api/Plant/1
+        
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(
-            int id,
-            [FromBody] Plant plant)
+        public IActionResult Update(int id, [FromBody] Plant plant)
         {
             try
             {
-                if (plant == null)
+                if (id <= 0)
                 {
-                    return BadRequest(new
-                    {
-                        message = "Plant data is required."
-                    });
+                    return BadRequest(new { message = "Invalid Plant ID." });
                 }
-
-                var existingPlant = await _context.Plants
-                    .FirstOrDefaultAsync(x => x.PlantId == id);
-
-                if (existingPlant == null)
-                {
-                    return NotFound(new
-                    {
-                        message = $"Plant with ID {id} not found."
-                    });
-                }
-
-                // Keep primary key unchanged
-                existingPlant.PlantName = plant.PlantName;
-                existingPlant.PlantCode = plant.PlantCode;
-                existingPlant.Isactive = plant.Isactive;
-
-                await _context.SaveChangesAsync();
-
-                return Ok(existingPlant);
-            }
-            catch (DbUpdateException ex)
-            {
-                return BadRequest(new
-                {
-                    message = "Unable to update plant.",
-                    error = ex.InnerException?.Message ?? ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "Error while updating plant.",
-                    error = ex.Message
-                });
-            }
-        }
-
-        // DELETE: api/Plant/1
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var plant = await _context.Plants
-                    .FirstOrDefaultAsync(x => x.PlantId == id);
 
                 if (plant == null)
                 {
-                    return NotFound(new
-                    {
-                        message = $"Plant with ID {id} not found."
-                    });
+                    return BadRequest(new { message = "Plant data is required." });
                 }
 
-                _context.Plants.Remove(plant);
-                await _context.SaveChangesAsync();
+                if (string.IsNullOrWhiteSpace(plant.PlantName))
+                {
+                    return BadRequest(new { message = "Plant Name is required." });
+                }
+
+                if (string.IsNullOrWhiteSpace(plant.PlantCode))
+                {
+                    return BadRequest(new { message = "Plant Code is required." });
+                }
+
+                // Assign route parameter ID directly to the entity
+                plant.PlantId = id;
+                plant.PlantName = plant.PlantName.Trim();
+                plant.PlantCode = plant.PlantCode.Trim();
+
+                var service = new DataModify();
+                var result = service.SaveBusiness(plant);
+
+                if (result <= 0)
+                {
+                    return BadRequest(new { message = "Plant could not be updated or record was not found." });
+                }
 
                 return Ok(new
                 {
-                    message = "Plant deleted successfully.",
+                    message = "Plant updated successfully.",
                     plantId = id
-                });
-            }
-            catch (DbUpdateException ex)
-            {
-                return BadRequest(new
-                {
-                    message = "Plant cannot be deleted because it may be used by another record.",
-                    error = ex.InnerException?.Message ?? ex.Message
                 });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    message = "Error while deleting plant.",
-                    error = ex.Message
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message
+                });
+            }
+        }
+
+        // =====================================================
+        // DELETE
+        // DELETE: api/Plant/1
+        // =====================================================
+        [HttpDelete("{id:int}")]
+        public IActionResult Delete(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    return BadRequest(new { message = "Invalid Plant ID." });
+                }
+
+                var existingPlant = QPrimaryService.GetPlant(id);
+
+                if (existingPlant == null)
+                {
+                    return BadRequest(new { message = "Plant not found." });
+                }
+
+                var service = new DataModify();
+                var result = service.DeletePlant(id);
+
+                if (!result)
+                {
+                    return BadRequest(new { message = "Plant could not be deleted." });
+                }
+
+                return Ok(new { message = "Plant deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message
                 });
             }
         }
