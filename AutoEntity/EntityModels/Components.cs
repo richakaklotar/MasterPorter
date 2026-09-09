@@ -19,6 +19,12 @@ namespace AutoEntity.EntityModels
         [Required]
         public int StandardHours { get; set; }
         [Required]
+        public int TopHours { get; set; }
+        [Required]
+        public int BottomHours { get; set; }
+        [Required]
+        public int SideHours { get; set; }
+        [Required]
         public int Stock { get; set; }
         [Required]
         public string SeriesNo { get; set; }
@@ -36,6 +42,6 @@ namespace AutoEntity.EntityModels
         [JsonIgnore]
         [ValidateNever]
         public virtual Machine Machine { get; set; }
-        public bool? Isactive { get; set; }
+        public string Status { get; set; }
     }
 }

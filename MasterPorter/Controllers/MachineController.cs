@@ -1,128 +1,4 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using AutoEntity.EntityModels;
-
-//namespace MasterPorter.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class MachineController : ControllerBase
-//    {
-//        private readonly MasterPorterContext _context;
-
-//        public MachineController(MasterPorterContext context)
-//        {
-//            _context = context;
-//        }
-
-//        // GET: api/Machine
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<Machine>>> GetMachine()
-//        {
-//          if (_context.Machine == null)
-//          {
-//              return NotFound();
-//          }
-//            return await _context.Machine.ToListAsync();
-//        }
-
-//        // GET: api/Machine/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<Machine>> GetMachine(int id)
-//        {
-//          if (_context.Machine == null)
-//          {
-//              return NotFound();
-//          }
-//            var machine = await _context.Machine.FindAsync(id);
-
-//            if (machine == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return machine;
-//        }
-
-//        // PUT: api/Machine/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutMachine(int id, Machine machine)
-//        {
-//            if (id != machine.MachineID)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(machine).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!MachineExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-//        }
-
-//        // POST: api/Machine
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<Machine>> PostMachine(Machine machine)
-//        {
-//          if (_context.Machine == null)
-//          {
-//              return Problem("Entity set 'MasterPorterContext.Machine'  is null.");
-//          }
-//            _context.Machine.Add(machine);
-//            await _context.SaveChangesAsync();
-
-//            return CreatedAtAction("GetMachine", new { id = machine.MachineID }, machine);
-//        }
-
-//        // DELETE: api/Machine/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteMachine(int id)
-//        {
-//            if (_context.Machine == null)
-//            {
-//                return NotFound();
-//            }
-//            var machine = await _context.Machine.FindAsync(id);
-//            if (machine == null)
-//            {
-//                return NotFound();
-//            }
-
-//            _context.Machine.Remove(machine);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool MachineExists(int id)
-//        {
-//            return (_context.Machine?.Any(e => e.MachineID == id)).GetValueOrDefault();
-//        }
-//    }
-//}
-
-using AutoEntity.EntityModels;
+﻿using AutoEntity.EntityModels;
 using Microsoft.AspNetCore.Mvc;
 using ModifyService;
 using ReadService;
@@ -133,95 +9,326 @@ namespace MasterPorter.Controllers
     [ApiController]
     public class MachineController : ControllerBase
     {
+        // =========================
+        // GET ALL
+        // =========================
         [HttpGet]
         public IActionResult GetAll()
         {
             try
             {
-                return Ok(QPrimaryService.GetExistingMachineList());
+                using (var context = new MasterPorterContext())
+                {
+                    var machines = context.Machine
+                        .Select(m => new
+                        {
+                            machineID = m.MachineID,
+                            machineName = m.MachineName,
+                            machineCode = m.MachineCode,
+                            status = m.Status,
+                            plantId = m.PlantId,
+                            divisionId = m.DivisionId
+                        })
+                        .ToList();
+
+                    return Ok(machines);
+                }
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Error while fetching machines.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
 
+
+        // =========================
+        // GET BY ID
+        // =========================
         [HttpGet("{id}")]
         public IActionResult GetById(int id)
         {
             try
             {
-                return Ok(QPrimaryService.GetMachine(id));
+                if (id <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Invalid machine ID."
+                    });
+                }
+
+                using (var context = new MasterPorterContext())
+                {
+                    var machine = context.Machine
+                        .Where(m => m.MachineID == id)
+                        .Select(m => new
+                        {
+                            machineID = m.MachineID,
+                            machineName = m.MachineName,
+                            machineCode = m.MachineCode,
+                            status = m.Status,
+                            plantId = m.PlantId,
+                            divisionId = m.DivisionId
+                        })
+                        .FirstOrDefault();
+
+                    if (machine == null)
+                    {
+                        return NotFound(new
+                        {
+                            message = "Machine not found."
+                        });
+                    }
+
+                    return Ok(machine);
+                }
             }
             catch (Exception ex)
             {
-                return NotFound(new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Error while fetching machine.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
 
+
+        // =========================
+        // CREATE
+        // =========================
         [HttpPost]
-        public IActionResult Create(Machine machine)
+        public IActionResult Create([FromBody] Machine machine)
         {
             try
             {
-                machine.MachineID = 0;
+                if (machine == null)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Machine data is required."
+                    });
+                }
 
-                var service = new DataModify();
-                int id = service.SaveMachine(machine);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-                return StatusCode(201,
-                    QPrimaryService.GetMachine(id));
+                using (var context = new MasterPorterContext())
+                {
+                    // Duplicate Machine Name
+                    bool nameExists = context.Machine.Any(x =>
+                        x.MachineName.ToLower() ==
+                        machine.MachineName.Trim().ToLower());
+
+                    if (nameExists)
+                    {
+                        return Conflict(new
+                        {
+                            message = "Machine Name already exists."
+                        });
+                    }
+
+                    // Duplicate Machine Code
+                    bool codeExists = context.Machine.Any(x =>
+                        x.MachineCode.ToLower() ==
+                        machine.MachineCode.Trim().ToLower());
+
+                    if (codeExists)
+                    {
+                        return Conflict(new
+                        {
+                            message = "Machine Code already exists."
+                        });
+                    }
+
+                    machine.MachineID = 0;
+                    machine.MachineName = machine.MachineName.Trim();
+                    machine.MachineCode = machine.MachineCode.Trim();
+
+                    context.Machine.Add(machine);
+
+                    context.SaveChanges();
+
+                    return Ok(new
+                    {
+                        message = "Machine created successfully.",
+                        machineID = machine.MachineID
+                    });
+                }
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Error while creating machine.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
 
+
+        // =========================
+        // UPDATE
+        // =========================
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Machine machine)
+        public IActionResult Update(int id, [FromBody] Machine machine)
         {
             try
             {
-                QPrimaryService.GetMachine(id);
+                if (id <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Invalid machine ID."
+                    });
+                }
 
-                machine.MachineID = id;
+                if (machine == null)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Machine data is required."
+                    });
+                }
 
-                var service = new DataModify();
-                service.SaveMachine(machine);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-                return Ok(QPrimaryService.GetMachine(id));
+                using (var context = new MasterPorterContext())
+                {
+                    var existingMachine = context.Machine
+                        .FirstOrDefault(x => x.MachineID == id);
+
+                    if (existingMachine == null)
+                    {
+                        return NotFound(new
+                        {
+                            message = "Machine not found."
+                        });
+                    }
+
+                    // Duplicate Name
+                    bool nameExists = context.Machine.Any(x =>
+                        x.MachineID != id &&
+                        x.MachineName.ToLower() ==
+                        machine.MachineName.Trim().ToLower());
+
+                    if (nameExists)
+                    {
+                        return Conflict(new
+                        {
+                            message = "Machine Name already exists."
+                        });
+                    }
+
+                    // Duplicate Code
+                    bool codeExists = context.Machine.Any(x =>
+                        x.MachineID != id &&
+                        x.MachineCode.ToLower() ==
+                        machine.MachineCode.Trim().ToLower());
+
+                    if (codeExists)
+                    {
+                        return Conflict(new
+                        {
+                            message = "Machine Code already exists."
+                        });
+                    }
+
+                    existingMachine.MachineName =
+                        machine.MachineName.Trim();
+
+                    existingMachine.MachineCode =
+                        machine.MachineCode.Trim();
+
+                    existingMachine.Status =
+                        machine.Status;
+
+                    existingMachine.PlantId =
+                        machine.PlantId;
+
+                    existingMachine.DivisionId =
+                        machine.DivisionId;
+
+                    context.SaveChanges();
+
+                    return Ok(new
+                    {
+                        message = "Machine updated successfully.",
+                        machineID = existingMachine.MachineID
+                    });
+                }
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Error while updating machine.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
 
+
+        // =========================
+        // DELETE
+        // =========================
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             try
             {
-                using var context = new MasterPorterContext();
-
-                var machine = context.Machine
-                    .FirstOrDefault(x => x.MachineID == id);
-
-                if (machine == null)
-                    return NotFound();
-
-                context.Machine.Remove(machine);
-                context.SaveChanges();
-
-                return Ok(new
+                if (id <= 0)
                 {
-                    message = "Machine deleted successfully."
-                });
+                    return BadRequest(new
+                    {
+                        message = "Invalid machine ID."
+                    });
+                }
+
+                using (var context = new MasterPorterContext())
+                {
+                    var machine = context.Machine
+                        .FirstOrDefault(x => x.MachineID == id);
+
+                    if (machine == null)
+                    {
+                        return NotFound(new
+                        {
+                            message = "Machine not found."
+                        });
+                    }
+
+                    context.Machine.Remove(machine);
+
+                    context.SaveChanges();
+
+                    return Ok(new
+                    {
+                        message = "Machine deleted successfully."
+                    });
+                }
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Error while deleting machine.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
     }

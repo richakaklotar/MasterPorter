@@ -17,6 +17,6 @@ namespace AutoEntity.EntityModels
         public TimeOnly StartTime { get; set; }
         [Required]
         public TimeOnly EndTime { get; set; }
-        public bool? Isactive { get; set; }
+        public string Status { get; set; }
     }
 }

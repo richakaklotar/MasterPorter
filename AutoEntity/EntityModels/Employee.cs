@@ -39,6 +39,6 @@ namespace AutoEntity.EntityModels
         [JsonIgnore]
         [ValidateNever]
         public virtual Shift Shift { get; set; }
-        public bool? Isactive { get; set; }
+        public string Status { get; set; }
     }
 }

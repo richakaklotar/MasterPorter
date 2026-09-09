@@ -14,42 +14,39 @@ namespace ModifyService
         public int SaveBusiness(Plant plant)
         {
             if (plant == null)
-                throw new ArgumentNullException(nameof(plant));
+                throw new ArgumentException(nameof(Plant));
 
-            using (var context = new MasterPorterContext())
+            var isExists = false;
+            if (plant.PlantId > 0)
             {
-                // UPDATE PATH
-                if (plant.PlantId > 0)
+                try
                 {
-                    var existingPlant = context.Plants
-                        .FirstOrDefault(x => x.PlantId == plant.PlantId);
-
-                    if (existingPlant == null)
-                    {
-                        return 0; // Record to update does not exist
-                    }
-
-                    // Copy values directly to tracked entity
-                    existingPlant.PlantName = plant.PlantName;
-                    existingPlant.PlantCode = plant.PlantCode;
-
-                    // Map active state (handles both C# naming conventions if needed)
-                    existingPlant.Isactive = plant.Isactive;
-
-                    context.SaveChanges();
-                    return existingPlant.PlantId;
+                    QPrimaryService.GetPlant(plant.PlantId);
+                    isExists = true;
+                }
+                catch (Exception)
+                {
+                    isExists = false;
+                }
+            }
+            int isSaved;
+            using (var ecomContext = new MasterPorterContext())
+            {
+                if (isExists)
+                {
+                    ecomContext.UpdateRange(plant);
                 }
                 else
                 {
-                    // INSERT PATH
-                    plant.PlantId = 0;
-                    context.Plants.Add(plant);
-                    context.SaveChanges();
-                    return plant.PlantId;
+                    ecomContext.AttachRange(plant);
                 }
+                isSaved = ecomContext.SaveChanges();
             }
+            int bid = 0;
+            if (isSaved == 1)
+                bid = plant.PlantId;
+            return bid;
         }
-
         #endregion
 
         #region Division
@@ -92,12 +89,13 @@ namespace ModifyService
         #endregion
 
         #region Machine
-        public int SaveMachine(Machine machine)
+        public static int SaveMachine(Machine machine)
         {
             if (machine == null)
-                throw new ArgumentException(nameof(Machine));
+                throw new ArgumentException(nameof(machine));
 
             var isExists = false;
+
             if (machine.MachineID > 0)
             {
                 try
@@ -110,23 +108,27 @@ namespace ModifyService
                     isExists = false;
                 }
             }
+
             int isSaved;
+
             using (var ecomContext = new MasterPorterContext())
             {
                 if (isExists)
                 {
-                    ecomContext.UpdateRange(machine);
+                    ecomContext.Update(machine);
                 }
                 else
                 {
-                    ecomContext.AttachRange(machine);
+                    ecomContext.Add(machine);
                 }
+
                 isSaved = ecomContext.SaveChanges();
             }
-            int bid = 0;
-            if (isSaved == 1)
-                bid = machine.MachineID;
-            return bid;
+
+            if (isSaved > 0)
+                return machine.MachineID;
+
+            return 0;
         }
         #endregion
 

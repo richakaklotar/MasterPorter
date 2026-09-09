@@ -16,7 +16,7 @@ namespace AutoEntity.EntityModels
         {
         }
 
-        public virtual DbSet<Plant> Plants { get; set; } = null!;
+        public virtual DbSet<Plant> Plant { get; set; } = null!;
         public virtual DbSet<Division> Division { get; set; } = null!;
         public virtual DbSet<Machine> Machine { get; set; } = null!;
         public virtual DbSet<Project> Project { get; set; } = null!;
@@ -43,17 +43,25 @@ namespace AutoEntity.EntityModels
 
             modelBuilder.Entity<Plant>(entity =>
             {
-                entity.ToTable("plant");
+                entity.HasKey(e => e.PlantId);
 
-                entity.Property(e => e.PlantId).HasColumnName("PlantID");
+                entity.ToTable("Plant");
 
-                entity.Property(e => e.Isactive)
+                entity.Property(e => e.PlantId)
+                    .HasColumnName("PlantId");
+
+                entity.Property(e => e.PlantName)
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(e => e.PlantCode)
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(e => e.Status)
+                    .HasMaxLength(20)
                     .IsRequired()
-                    .HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.PlantCode).HasMaxLength(255);
-
-                entity.Property(e => e.PlantName).HasMaxLength(255);
+                    .HasDefaultValue("Active");
             });
 
             OnModelCreatingPartial(modelBuilder);

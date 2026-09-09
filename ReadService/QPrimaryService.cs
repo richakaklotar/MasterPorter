@@ -5,59 +5,62 @@ namespace ReadService
     public class QPrimaryService
     {
         #region Plant
-        public static Plant GetPlant(int bid)
+        public static Plant GetPlant(int plantId)
         {
-            if (bid <= 0)
-                throw new ArgumentNullException(nameof(bid));
+            if (plantId <= 0)
+                throw new ArgumentNullException(nameof(plantId));
 
             Plant plant;
             using (var ecomContext = new MasterPorterContext())
             {
-                plant = ecomContext.Plants.Where(bus => bus.PlantId == bid).FirstOrDefault();
+                plant = ecomContext.Plant.FirstOrDefault(d => d.PlantId == plantId);
             }
+
             if (plant == null)
                 throw new Exception("No data found with the provided data!");
+
             return plant;
         }
 
-        public static string GetPlantName(int bid)
+        public static string GetPlantName(int plantId)
         {
-            if (bid <= 0)
-                throw new ArgumentNullException(nameof(bid));
+            if (plantId <= 0)
+                throw new ArgumentNullException(nameof(plantId));
 
             string plantName;
             using (var ecomContext = new MasterPorterContext())
             {
-                plantName = ecomContext.Plants.Where(bus => bus.PlantId == bid).Select(b => b.PlantName).FirstOrDefault();
+                plantName = ecomContext.Plant.Where(d => d.PlantId == plantId).Select(d => d.PlantName).FirstOrDefault();
             }
+
             if (plantName == null)
                 throw new Exception("No data found with the provided data!");
+
             return plantName;
         }
 
-        /*Seperate hosting, So user specific records are not required*/
+        /* Separate hosting, so user specific records are not required */
         public static List<Plant> GetPlantList()
         {
             List<Plant> plantList;
             using (var ecomContext = new MasterPorterContext())
             {
-                plantList = ecomContext.Plants.Where(bus => bus.Isactive == true).ToList();
+                plantList = ecomContext.Plant.ToList();
             }
-            if (plantList == null || plantList.Count <= 0)
+
+            if (plantList == null || plantList.Count == 0)
                 throw new Exception("No data found with the provided data!");
+
             return plantList;
         }
 
         public static List<Plant> GetExistingPlantList()
         {
-            List<Plant> plantList;
             using (var ecomContext = new MasterPorterContext())
             {
-                plantList = ecomContext.Plants.Where(bus => bus.Isactive == true).ToList();
+                return ecomContext.Plant.ToList();
             }
-            return plantList;
         }
-
         #endregion
 
         #region Division
