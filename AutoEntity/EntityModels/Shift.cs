@@ -18,6 +18,7 @@ namespace AutoEntity.EntityModels
         [NotMapped]
         public TimeOnly StartTime { get; set; }
         [Required]
+        [NotMapped]
         public TimeOnly EndTime { get; set; }
         public string Status { get; set; }
     }
