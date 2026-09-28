@@ -27,7 +27,8 @@ namespace AutoEntity.EntityModels
         [Required]
         public string Address { get; set; }
         [Required]
-        public DateOnly JoiningDate { get; set; }
+        [Column(TypeName = "date")]
+        public DateTime JoiningDate { get; set; }
         [ForeignKey(nameof(Designation))]
         public int DesignationID { get; set; }
         [ForeignKey(nameof(Shift))]
