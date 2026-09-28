@@ -28,6 +28,7 @@ namespace AutoEntity.EntityModels
         public string Address { get; set; }
         [Required]
         [Column(TypeName = "date")]
+        [NotMapped]
         public DateTime JoiningDate { get; set; }
         [ForeignKey(nameof(Designation))]
         public int DesignationID { get; set; }
