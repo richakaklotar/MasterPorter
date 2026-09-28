@@ -10,10 +10,7 @@ var connectionString = builder.Configuration.GetConnectionString("EC");
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
     {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
+        sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
     }));
 
 builder.Services.AddCors(options =>
