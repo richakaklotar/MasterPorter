@@ -1,5 +1,6 @@
 using AutoEntity.EntityModels;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,20 +25,13 @@ var connectionString = builder.Configuration.GetConnectionString("EC");
 //);
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("EC"),
-        ServerVersion.AutoDetect(
-            builder.Configuration.GetConnectionString("EC")
-        ),
-        mySqlOptions =>
-        {
-            mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
-            );
-        }
-    )
-);
+        connectionString,
+        ServerVersion.AutoDetect(connectionString),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null)
+    ));
 
 builder.Services.AddCors(options =>
 {
