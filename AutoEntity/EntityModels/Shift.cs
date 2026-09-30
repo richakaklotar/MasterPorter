@@ -1,25 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AutoEntity.EntityModels
 {
+    [Index(nameof(ShiftName), IsUnique = true)]
     public partial class Shift
     {
         [Key]
         public int ShiftID { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Shift Name is required")]
+        [StringLength(25, ErrorMessage = "Shift Name cannot exceed 25 characters")]
         public string ShiftName { get; set; }
-        [Required]
-        [NotMapped]
+
+        [Required(ErrorMessage = "Start Time is required")]
         public TimeOnly StartTime { get; set; }
-        [Required]
-        [NotMapped]
+
+        [Required(ErrorMessage = "End Time is required")]
         public TimeOnly EndTime { get; set; }
+
+        [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; }
     }
 }

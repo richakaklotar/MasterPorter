@@ -1,26 +1,30 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace AutoEntity.EntityModels
 {
+    [Index(nameof(ProjectName), IsUnique = true)]
+    [Index(nameof(ProjectCode), IsUnique = true)]
     public partial class Project
     {
         [Key]
         public int ProjectID { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Project Name is required")]
+        [StringLength(25, ErrorMessage = "Project Name cannot exceed 25 characters")]
         public string ProjectName { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Project Code is required")]
+        [StringLength(25, ErrorMessage = "Project Code cannot exceed 25 characters")]
         public string ProjectCode { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; }
 
+        [Required(ErrorMessage = "Machine is required")]
         [ForeignKey(nameof(Machine))]
         public int MachineID { get; set; }
 

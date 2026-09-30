@@ -21,15 +21,7 @@ var connectionString =
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString),
-        mySqlOptions =>
-        {
-            mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
-            );
-        }
+        new MySqlServerVersion(new Version(8, 0, 0))
     )
 );
 
