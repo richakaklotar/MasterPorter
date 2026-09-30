@@ -5,31 +5,37 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-//var connectionString =
-//    builder.Configuration.GetConnectionString("EC");
+var connectionString = builder.Configuration.GetConnectionString("EC");
 
 //builder.Services.AddDbContext<MasterPorterContext>(options =>
 //    options.UseMySql(
 //        connectionString,
-//        new MySqlServerVersion(new Version(8, 0, 0))
+//        new MySqlServerVersion(new Version(8, 0, 0)),
+//        //mySqlOptions =>
+//        //{
+//        //    mySqlOptions.EnableRetryOnFailure(
+//        //        maxRetryCount: 5,
+//        //        maxRetryDelay: TimeSpan.FromSeconds(10),
+//        //        errorNumbersToAdd: null
+//        //    );
+//        //}
+//        mySqlOptions => mySqlOptions.EnableRetryOnFailure(maxRetryCount: 1)
 //    )
 //);
-
-var connectionString = builder.Configuration.GetConnectionString("EC");
-
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
-        connectionString,
-        new MySqlServerVersion(new Version(8, 0, 0)),
-        //mySqlOptions =>
-        //{
-        //    mySqlOptions.EnableRetryOnFailure(
-        //        maxRetryCount: 5,
-        //        maxRetryDelay: TimeSpan.FromSeconds(10),
-        //        errorNumbersToAdd: null
-        //    );
-        //}
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure(maxRetryCount: 1)
+        builder.Configuration.GetConnectionString("EC"),
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("EC")
+        ),
+        mySqlOptions =>
+        {
+            mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            );
+        }
     )
 );
 
