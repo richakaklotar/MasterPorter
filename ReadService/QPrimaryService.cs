@@ -1,65 +1,88 @@
 ﻿using AutoEntity.EntityModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace ReadService
 {
     public class QPrimaryService
     {
         #region Plant
-        public static Plant GetPlant(int plantId)
-        {
-            if (plantId <= 0)
-                throw new ArgumentNullException(nameof(plantId));
+        //public static Plant GetPlant(int plantId)
+        //{
+        //    if (plantId <= 0)
+        //        throw new ArgumentNullException(nameof(plantId));
 
-            Plant plant;
-            using (var ecomContext = new MasterPorterContext())
-            {
-                plant = ecomContext.Plant.FirstOrDefault(d => d.PlantId == plantId);
-            }
+        //    Plant plant;
+        //    using (var ecomContext = new MasterPorterContext())
+        //    {
+        //        plant = ecomContext.Plant.FirstOrDefault(d => d.PlantId == plantId);
+        //    }
 
-            if (plant == null)
-                throw new Exception("No data found with the provided data!");
+        //    if (plant == null)
+        //        throw new Exception("No data found with the provided data!");
 
-            return plant;
-        }
+        //    return plant;
+        //}
 
-        public static string GetPlantName(int plantId)
-        {
-            if (plantId <= 0)
-                throw new ArgumentNullException(nameof(plantId));
+        //public static string GetPlantName(int plantId)
+        //{
+        //    if (plantId <= 0)
+        //        throw new ArgumentNullException(nameof(plantId));
 
-            string plantName;
-            using (var ecomContext = new MasterPorterContext())
-            {
-                plantName = ecomContext.Plant.Where(d => d.PlantId == plantId).Select(d => d.PlantName).FirstOrDefault();
-            }
+        //    string plantName;
+        //    using (var ecomContext = new MasterPorterContext())
+        //    {
+        //        plantName = ecomContext.Plant.Where(d => d.PlantId == plantId).Select(d => d.PlantName).FirstOrDefault();
+        //    }
 
-            if (plantName == null)
-                throw new Exception("No data found with the provided data!");
+        //    if (plantName == null)
+        //        throw new Exception("No data found with the provided data!");
 
-            return plantName;
-        }
+        //    return plantName;
+        //}
 
-        /* Separate hosting, so user specific records are not required */
+        ///* Separate hosting, so user specific records are not required */
+        //public static List<Plant> GetPlantList()
+        //{
+        //    List<Plant> plantList;
+        //    using (var ecomContext = new MasterPorterContext())
+        //    {
+        //        plantList = ecomContext.Plant.ToList();
+        //    }
+
+        //    if (plantList == null || plantList.Count == 0)
+        //        throw new Exception("No data found with the provided data!");
+
+        //    return plantList;
+        //}
+
+        //public static List<Plant> GetExistingPlantList()
+        //{
+        //    using (var ecomContext = new MasterPorterContext())
+        //    {
+        //        return ecomContext.Plant.ToList();
+        //    }
+        //}
+
         public static List<Plant> GetPlantList()
         {
-            List<Plant> plantList;
-            using (var ecomContext = new MasterPorterContext())
-            {
-                plantList = ecomContext.Plant.ToList();
-            }
-
-            if (plantList == null || plantList.Count == 0)
-                throw new Exception("No data found with the provided data!");
-
-            return plantList;
+            using var context = new MasterPorterContext();
+            return context.Plant
+                .AsNoTracking()
+                .OrderBy(x => x.PlantId)
+                .ToList();
         }
 
-        public static List<Plant> GetExistingPlantList()
+        public static Plant GetPlant(int id)
         {
-            using (var ecomContext = new MasterPorterContext())
-            {
-                return ecomContext.Plant.ToList();
-            }
+            using var context = new MasterPorterContext();
+            var plant = context.Plant
+                .AsNoTracking()
+                .FirstOrDefault(x => x.PlantId == id);
+
+            if (plant == null)
+                throw new Exception("Plant not found.");
+
+            return plant;
         }
         #endregion
 

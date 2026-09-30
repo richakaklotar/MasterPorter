@@ -5,16 +5,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-var connectionString =
-    builder.Configuration.GetConnectionString("EC");
-
-builder.Services.AddDbContext<MasterPorterContext>(options =>
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    )
-);
-
 //var connectionString =
 //    builder.Configuration.GetConnectionString("EC");
 
@@ -24,6 +14,24 @@ builder.Services.AddDbContext<MasterPorterContext>(options =>
 //        new MySqlServerVersion(new Version(8, 0, 0))
 //    )
 //);
+
+var connectionString = builder.Configuration.GetConnectionString("EC");
+
+builder.Services.AddDbContext<MasterPorterContext>(options =>
+    options.UseMySql(
+        connectionString,
+        new MySqlServerVersion(new Version(8, 0, 0)),
+        //mySqlOptions =>
+        //{
+        //    mySqlOptions.EnableRetryOnFailure(
+        //        maxRetryCount: 5,
+        //        maxRetryDelay: TimeSpan.FromSeconds(10),
+        //        errorNumbersToAdd: null
+        //    );
+        //}
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure(maxRetryCount: 1)
+    )
+);
 
 builder.Services.AddCors(options =>
 {

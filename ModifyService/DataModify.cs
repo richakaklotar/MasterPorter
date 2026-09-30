@@ -11,41 +11,60 @@ namespace ModifyService
         }
 
         #region Plant
-        public int SaveBusiness(Plant plant)
+        public int SavePlant(Plant plant)
         {
-            if (plant == null)
-                throw new ArgumentException(nameof(Plant));
+            if (string.IsNullOrWhiteSpace(plant.PlantName))
+                throw new Exception("Plant Name is required.");
 
-            var isExists = false;
-            if (plant.PlantId > 0)
+            if (string.IsNullOrWhiteSpace(plant.PlantCode))
+                throw new Exception("Plant Code is required.");
+
+            using var context = new MasterPorterContext();
+
+            // Duplicate Plant Code check
+            bool duplicate = context.Plant.Any(x =>
+                x.PlantCode == plant.PlantCode && x.PlantId != plant.PlantId);
+
+            if (duplicate)
+                throw new Exception("Plant Code already exists.");
+
+            if (plant.PlantId == 0)
             {
-                try
-                {
-                    QPrimaryService.GetPlant(plant.PlantId);
-                    isExists = true;
-                }
-                catch (Exception)
-                {
-                    isExists = false;
-                }
+                if (string.IsNullOrWhiteSpace(plant.Status))
+                    plant.Status = "Active";
+
+                context.Plant.Add(plant);
             }
-            int isSaved;
-            using (var ecomContext = new MasterPorterContext())
+            else
             {
-                if (isExists)
-                {
-                    ecomContext.UpdateRange(plant);
-                }
-                else
-                {
-                    ecomContext.AttachRange(plant);
-                }
-                isSaved = ecomContext.SaveChanges();
+                var existing = context.Plant
+                    .FirstOrDefault(x => x.PlantId == plant.PlantId);
+
+                if (existing == null)
+                    throw new Exception("Plant not found.");
+
+                existing.PlantName = plant.PlantName;
+                existing.PlantCode = plant.PlantCode;
+                existing.Status = string.IsNullOrWhiteSpace(plant.Status)
+                    ? "Active"
+                    : plant.Status;
             }
-            int bid = 0;
-            if (isSaved == 1)
-                bid = plant.PlantId;
-            return bid;
+
+            context.SaveChanges();
+            return plant.PlantId == 0 ? 0 : plant.PlantId;
+        }
+
+        public bool DeletePlant(int id)
+        {
+            using var context = new MasterPorterContext();
+
+            var plant = context.Plant.FirstOrDefault(x => x.PlantId == id);
+            if (plant == null)
+                return false;
+
+            context.Plant.Remove(plant);
+            context.SaveChanges();
+            return true;
         }
         #endregion
 
