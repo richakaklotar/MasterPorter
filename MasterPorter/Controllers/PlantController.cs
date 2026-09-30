@@ -16,18 +16,9 @@ namespace MasterPorter.Controllers
             {
                 return Ok(QPrimaryService.GetPlantList());
             }
-            //catch (Exception ex)
-            //{
-            //    return StatusCode(500, new { message = ex.Message });
-            //}
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = ex.Message,
-                    inner = ex.InnerException?.Message,
-                    inner2 = ex.InnerException?.InnerException?.Message
-                });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
