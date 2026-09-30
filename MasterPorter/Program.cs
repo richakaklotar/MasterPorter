@@ -5,25 +5,25 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-//var connectionString =
-//    builder.Configuration.GetConnectionString("EC");
-
-//builder.Services.AddDbContext<MasterPorterContext>(options =>
-//    options.UseMySql(
-//        connectionString,
-//        ServerVersion.AutoDetect(connectionString)
-//    )
-//);
-
 var connectionString =
     builder.Configuration.GetConnectionString("EC");
 
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(new Version(8, 0, 0))
+        ServerVersion.AutoDetect(connectionString)
     )
 );
+
+//var connectionString =
+//    builder.Configuration.GetConnectionString("EC");
+
+//builder.Services.AddDbContext<MasterPorterContext>(options =>
+//    options.UseMySql(
+//        connectionString,
+//        new MySqlServerVersion(new Version(8, 0, 0))
+//    )
+//);
 
 builder.Services.AddCors(options =>
 {
