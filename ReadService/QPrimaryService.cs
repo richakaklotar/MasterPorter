@@ -6,78 +6,16 @@ namespace ReadService
     public class QPrimaryService
     {
         #region Plant
-        //public static Plant GetPlant(int plantId)
-        //{
-        //    if (plantId <= 0)
-        //        throw new ArgumentNullException(nameof(plantId));
-
-        //    Plant plant;
-        //    using (var ecomContext = new MasterPorterContext())
-        //    {
-        //        plant = ecomContext.Plant.FirstOrDefault(d => d.PlantId == plantId);
-        //    }
-
-        //    if (plant == null)
-        //        throw new Exception("No data found with the provided data!");
-
-        //    return plant;
-        //}
-
-        //public static string GetPlantName(int plantId)
-        //{
-        //    if (plantId <= 0)
-        //        throw new ArgumentNullException(nameof(plantId));
-
-        //    string plantName;
-        //    using (var ecomContext = new MasterPorterContext())
-        //    {
-        //        plantName = ecomContext.Plant.Where(d => d.PlantId == plantId).Select(d => d.PlantName).FirstOrDefault();
-        //    }
-
-        //    if (plantName == null)
-        //        throw new Exception("No data found with the provided data!");
-
-        //    return plantName;
-        //}
-
-        ///* Separate hosting, so user specific records are not required */
-        //public static List<Plant> GetPlantList()
-        //{
-        //    List<Plant> plantList;
-        //    using (var ecomContext = new MasterPorterContext())
-        //    {
-        //        plantList = ecomContext.Plant.ToList();
-        //    }
-
-        //    if (plantList == null || plantList.Count == 0)
-        //        throw new Exception("No data found with the provided data!");
-
-        //    return plantList;
-        //}
-
-        //public static List<Plant> GetExistingPlantList()
-        //{
-        //    using (var ecomContext = new MasterPorterContext())
-        //    {
-        //        return ecomContext.Plant.ToList();
-        //    }
-        //}
-
         public static List<Plant> GetPlantList()
         {
             using var context = new MasterPorterContext();
-            return context.Plant
-                .AsNoTracking()
-                .OrderBy(x => x.PlantId)
-                .ToList();
+            return context.Plant.AsNoTracking().OrderBy(x => x.PlantId).ToList();
         }
 
         public static Plant GetPlant(int id)
         {
             using var context = new MasterPorterContext();
-            var plant = context.Plant
-                .AsNoTracking()
-                .FirstOrDefault(x => x.PlantId == id);
+            var plant = context.Plant.AsNoTracking().FirstOrDefault(x => x.PlantId == id);
 
             if (plant == null)
                 throw new Exception("Plant not found.");
@@ -624,6 +562,48 @@ namespace ReadService
                 return ecomContext.Employee.ToList();
             }
         }
+        #endregion
+
+        #region JobCard
+        public static JobCard GetJobCard(int jobCardId)
+        {
+            if (jobCardId <= 0)
+                throw new ArgumentNullException(nameof(jobCardId));
+
+            JobCard jobCard;
+
+            using (var ecomContext = new MasterPorterContext())
+            {
+                jobCard = ecomContext.JobCard.AsNoTracking().FirstOrDefault(x => x.JobCardID == jobCardId);
+            }
+
+            if (jobCard == null)
+                throw new Exception("No data found with the provided data!");
+
+            return jobCard;
+        }
+
+        public static List<JobCard> GetJobCardList()
+        {
+            using (var ecomContext = new MasterPorterContext())
+            {
+                var jobCardList = ecomContext.JobCard.AsNoTracking().OrderBy(x => x.JobCardID).ToList();
+
+                if (jobCardList == null || jobCardList.Count == 0)
+                    throw new Exception("No data found with the provided data!");
+
+                return jobCardList;
+            }
+        }
+
+        public static List<JobCard> GetExistingJobCardList()
+        {
+            using (var ecomContext = new MasterPorterContext())
+            {
+                return ecomContext.JobCard.AsNoTracking().OrderBy(x => x.JobCardID).ToList();
+            }
+        }
+
         #endregion
     }
 }

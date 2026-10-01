@@ -423,5 +423,109 @@ namespace ModifyService
             return bid;
         }
         #endregion
+
+        #region JobCard
+        public int SaveJobCard(JobCard jobCard)
+        {
+            if (jobCard == null)
+                throw new ArgumentException(nameof(JobCard));
+
+            if (jobCard.Date == default)
+                throw new Exception("Date is required.");
+
+            if (jobCard.ShiftID <= 0)
+                throw new Exception("Shift is required.");
+
+            if (jobCard.ProjectID <= 0)
+                throw new Exception("Project is required.");
+
+            if (jobCard.ComponentID <= 0)
+                throw new Exception("Component is required.");
+
+            if (jobCard.ActivitiesID <= 0)
+                throw new Exception("Activity is required.");
+
+            if (jobCard.SubActivitiesID <= 0)
+                throw new Exception("Sub Activity is required.");
+
+            if (jobCard.TotalHours < 0 || jobCard.TotalHours > 24)
+                throw new Exception("Total Hours must be between 0 and 24.");
+
+            if (string.IsNullOrWhiteSpace(jobCard.Status))
+                jobCard.Status = "Active";
+
+            var isExists = false;
+
+            if (jobCard.JobCardID > 0)
+            {
+                try
+                {
+                    QPrimaryService.GetJobCard(jobCard.JobCardID);
+                    isExists = true;
+                }
+                catch (Exception)
+                {
+                    isExists = false;
+                }
+            }
+
+            int isSaved;
+
+            using (var ecomContext = new MasterPorterContext())
+            {
+                if (isExists)
+                {
+                    var existing = ecomContext.JobCard.FirstOrDefault(x => x.JobCardID == jobCard.JobCardID);
+
+                    if (existing == null)
+                        throw new Exception("Job Card not found.");
+
+                    existing.Date = jobCard.Date;
+                    existing.Operator = jobCard.Operator;
+                    existing.ShiftID = jobCard.ShiftID;
+                    existing.ProjectID = jobCard.ProjectID;
+                    existing.ComponentID = jobCard.ComponentID;
+                    existing.ActivitiesID = jobCard.ActivitiesID;
+                    existing.SubActivitiesID = jobCard.SubActivitiesID;
+                    existing.StartTime = jobCard.StartTime;
+                    existing.EndTime = jobCard.EndTime;
+                    existing.TotalHours = jobCard.TotalHours;
+                    existing.Remarks = jobCard.Remarks;
+                    existing.IsRework = jobCard.IsRework;
+                    existing.Status = jobCard.Status;
+                }
+                else
+                {
+                    ecomContext.JobCard.Add(jobCard);
+                }
+
+                isSaved = ecomContext.SaveChanges();
+            }
+
+            if (isSaved > 0)
+                return jobCard.JobCardID;
+
+            return 0;
+        }
+
+        public bool DeleteJobCard(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Invalid JobCardID.");
+
+            using var context = new MasterPorterContext();
+
+            var jobCard = context.JobCard.FirstOrDefault(x => x.JobCardID == id);
+
+            if (jobCard == null)
+                return false;
+
+            context.JobCard.Remove(jobCard);
+            context.SaveChanges();
+
+            return true;
+        }
+
+        #endregion
     }
 }

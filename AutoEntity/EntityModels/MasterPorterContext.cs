@@ -26,6 +26,7 @@ namespace AutoEntity.EntityModels
         public virtual DbSet<Shift> Shift { get; set; } = null!;
         public virtual DbSet<Designation> Designation { get; set; } = null!;
         public virtual DbSet<Employee> Employee { get; set; } = null!;
+        public virtual DbSet<JobCard> JobCard { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
