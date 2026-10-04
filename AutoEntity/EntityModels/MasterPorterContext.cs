@@ -28,20 +28,16 @@ namespace AutoEntity.EntityModels
         public virtual DbSet<Employee> Employee { get; set; } = null!;
         public virtual DbSet<JobCard> JobCard { get; set; } = null!;
 
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    //if (!optionsBuilder.IsConfigured)
-        //    //{
-        //    //    #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        //    //    optionsBuilder.UseMySql("server=127.0.0.1;port=3306;database=MasterPorter;uid=root;password=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.46-mysql"));
-        //    //}
-
-        //    if (!optionsBuilder.IsConfigured)
-        //    {
-        //        #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        //        optionsBuilder.UseMySql("Server=db66217.databaseasp.net; Database=db66217; User Id=db66217; Password=Baltiboi2026;", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.46-mysql"));
-        //    }
-        //}
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseMySql(
+                    "Server=db66217.databaseasp.net; Database=db66217; User Id=db66217; Password=Baltiboi2026;",
+                    new MySqlServerVersion(new Version(8, 0, 46)),
+                    o => o.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null));
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
