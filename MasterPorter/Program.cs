@@ -11,12 +11,11 @@ var connectionString = builder.Configuration.GetConnectionString("EC");
 builder.Services.AddDbContext<MasterPorterContext>(options =>
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(new Version(8, 0, 46)),
+        ServerVersion.AutoDetect(connectionString),
         mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null))
-            );
+            errorNumbersToAdd: null)));
 
 builder.Services.AddCors(options =>
 {
