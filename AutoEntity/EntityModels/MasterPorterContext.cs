@@ -31,7 +31,7 @@ namespace AutoEntity.EntityModels
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
                 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-            => optionsBuilder.UseMySql("Server=db66217.databaseasp.net; Database=db66217; User Id=db66217; Password=Baltiboi2026;", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.1.0-mysql"));
+            => optionsBuilder.UseMySql("Server=db66217.databaseasp.net; Database=db66217; User Id=db66217; Password=Baltiboi2026;", ServerVersion.Parse("8.0.x-mysql"));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
